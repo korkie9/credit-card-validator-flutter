@@ -19,6 +19,9 @@ enum CardType {
 
 
 class CardUtils {
+
+  // Todo: added missing card type checks
+
   static CardType getCreditCardType(String input) {
     if (input.startsWith(RegExp(
         r'((5[1-5])|(222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720))'))) {

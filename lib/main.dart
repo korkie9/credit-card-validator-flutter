@@ -145,9 +145,8 @@ class _HomePageState extends State<HomePage> {
             //Todo: edit this to allow custom images
             customCardTypeIcons: [CustomCardTypeIcon(cardType: CardType.otherBrand, cardImage: Image.asset('assets/images/verve.png'))],
             isHolderNameVisible: true,
-            //Model will need two card type fields, to account for tyep not found on card type
-            cardType: CardType.elo,
-            backgroundImage: 'assets/images/mastercard.png',
+            //Todo: Model will need two card type fields, to account for tyep not found on card type
+            cardType: CardType.hipercard,
             cardNumber: creditCards[index].cardNumber,
             expiryDate: creditCards[index].expiryDate,
             cardHolderName: creditCards[index].cardHolderName,
