@@ -8,13 +8,22 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'pages/pages.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:credit_card_validator_app/hive/boxes.dart';
+<<<<<<< HEAD
 import 'package:credit_card_validator_app/hive/hive.dart' as hive_models;
+=======
+import 'package:credit_card_validator_app/hive/hive.dart' as hive;
+>>>>>>> 6f7d5dcf4916f9f53d9451552ea0249e5751a39f
 
 void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(CreditCardAdapter());
+<<<<<<< HEAD
   Hive.registerAdapter(CountryAdapter());
   // boxCountries = await Hive.openBox<hive_models.Country>('countryBox');
+=======
+  Hive.registerAdapter(hive.CountryAdapter());
+  boxCountries = await Hive.openBox<hive.Country>('countryBox');
+>>>>>>> 6f7d5dcf4916f9f53d9451552ea0249e5751a39f
   boxCreditCards = await Hive.openBox<CreditCard>('creditCardBox');
   runApp(const CreditCardValidatorApp());
 }
@@ -52,6 +61,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+<<<<<<< HEAD
   // late Country country;
   // @override
   // initState() {
@@ -68,40 +78,11 @@ class _HomePageState extends State<HomePage> {
   //   //     displayNameNoCountryCode: 'South Africa (ZA)',
   //   //     e164Key: '27-ZA-0');
   // }
+=======
+>>>>>>> 6f7d5dcf4916f9f53d9451552ea0249e5751a39f
 
   @override
   Widget build(BuildContext context) {
-    //Todo: Get from hive
-    // final List<CreditCardModel> creditCards = [
-    //   CreditCardModel(
-    //       cardNumber: '103737367280',
-    //       expiryDate: '12/11/2021',
-    //       cardHolderName: 'Justin Korkie',
-    //       cvv: '901',
-    //       country: country,
-    //       cardType: 'mastercard'),
-    //   CreditCardModel(
-    //     cardNumber: '2098797987987980',
-    //     expiryDate: '12/11/2021',
-    //     cardHolderName: 'Kevin Spacey',
-    //     cvv: '901',
-    //     country: country,
-    //   ),
-    //   CreditCardModel(
-    //     cardNumber: '398798798798700',
-    //     expiryDate: '12/11/2021',
-    //     cardHolderName: 'John Doe',
-    //     cvv: '901',
-    //     country: country,
-    //   ),
-    //   CreditCardModel(
-    //     cardNumber: '309879879879870',
-    //     expiryDate: '12/11/2021',
-    //     cardHolderName: 'John Doe',
-    //     cvv: '901',
-    //     country: country,
-    //   ),
-    // ];
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Cards'),
