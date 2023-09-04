@@ -1,10 +1,15 @@
 import 'package:credit_card_validator/validation_results.dart';
+import 'package:credit_card_validator_app/hive/boxes.dart';
+import 'package:credit_card_validator_app/hive/credit_card.dart';
 import 'package:credit_card_validator_app/input_formatters/input_formatters.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:credit_card_validator_app/utils/utils.dart';
 import 'package:credit_card_validator/credit_card_validator.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'dart:developer';
 
 class AddCardPage extends StatefulWidget {
   const AddCardPage({super.key});
@@ -16,9 +21,15 @@ class AddCardPage extends StatefulWidget {
 class _AddCardPageState extends State<AddCardPage> {
   final _addCardFormKey = GlobalKey<FormState>();
   String cardTypePath = '';
+  //Controllers
+  TextEditingController cardHolderNameController = TextEditingController();
+  TextEditingController cardNumberController = TextEditingController();
+  TextEditingController cvvController = TextEditingController();
+  TextEditingController expiryDateController = TextEditingController();
+
   final CreditCardValidator _ccValidator = CreditCardValidator();
 
-  Country selectCountry = Country(
+  Country selectedCountry = Country(
       phoneCode: '27',
       countryCode: 'ZA',
       e164Sc: 0,
@@ -29,6 +40,7 @@ class _AddCardPageState extends State<AddCardPage> {
       displayName: 'South Africa (ZA) [+27]',
       displayNameNoCountryCode: 'South Africa (ZA)',
       e164Key: '27-ZA-0');
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,6 +82,7 @@ class _AddCardPageState extends State<AddCardPage> {
   Widget buildCardNumber() => Container(
         margin: const EdgeInsets.only(top: 10, bottom: 10),
         child: TextFormField(
+          controller: cardNumberController,
           onChanged: (value) {
             if (value.length > 4) return;
             setState(() {
@@ -106,6 +119,7 @@ class _AddCardPageState extends State<AddCardPage> {
       padding: const EdgeInsets.only(right: 10),
       margin: const EdgeInsets.only(top: 10, bottom: 10),
       child: TextFormField(
+        controller: cvvController,
         keyboardType: TextInputType.number,
         decoration: const InputDecoration(
           labelText: 'CVV',
@@ -149,7 +163,7 @@ class _AddCardPageState extends State<AddCardPage> {
                       showPhoneCode: false,
                       onSelect: (Country country) {
                         setState(() {
-                          selectCountry = country;
+                          selectedCountry = country;
                         });
                       },
                       countryListTheme: CountryListThemeData(
@@ -173,8 +187,8 @@ class _AddCardPageState extends State<AddCardPage> {
                   child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(selectCountry.flagEmoji),
-                        Text(selectCountry.name),
+                        Text(selectedCountry.flagEmoji),
+                        Text(selectedCountry.name),
                         const Icon(Icons.arrow_drop_down)
                       ]),
                 ),
@@ -189,7 +203,19 @@ class _AddCardPageState extends State<AddCardPage> {
       width: 400,
       child: ElevatedButton(
         onPressed: () {
-          _addCardFormKey.currentState?.validate();
+          bool? isValid = _addCardFormKey.currentState?.validate();
+          if (isValid != null && isValid) {
+            CreditCard newCard = CreditCard(
+              cardNumber: cardNumberController.text,
+              expiryDate: expiryDateController.text,
+              cardHolderName: cardHolderNameController.text,
+              cvv: cvvController.text,
+              countryFlagEmoji: selectedCountry.flagEmoji,
+            );
+            setState(() {
+              boxCreditCards.add(newCard);
+            });
+          }
         },
         child: const Text(
           'Submit',
@@ -202,6 +228,7 @@ class _AddCardPageState extends State<AddCardPage> {
   Widget buildName() => Container(
       margin: const EdgeInsets.only(top: 10, bottom: 10),
       child: TextFormField(
+        controller: cardHolderNameController,
         keyboardType: TextInputType.name,
         decoration: const InputDecoration(
           labelText: 'Name of Card Holder',
@@ -227,6 +254,7 @@ class _AddCardPageState extends State<AddCardPage> {
       padding: const EdgeInsets.only(left: 10),
       margin: const EdgeInsets.only(top: 10, bottom: 10),
       child: TextFormField(
+        controller: expiryDateController,
         keyboardType: TextInputType.number,
         decoration: const InputDecoration(
           labelText: 'Expiry Date',

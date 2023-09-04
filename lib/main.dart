@@ -1,11 +1,18 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:credit_card_validator_app/components/components.dart';
+import 'package:credit_card_validator_app/hive/credit_card.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_credit_card/flutter_credit_card.dart';
 import 'package:country_picker/country_picker.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'models/models.dart';
 import 'pages/pages.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:credit_card_validator_app/hive/boxes.dart';
 
-void main() {
+void main() async {
+  await Hive.initFlutter();
+  Hive.registerAdapter(CreditCardAdapter());
+  boxCreditCards = await Hive.openBox<CreditCard>('creditCardBox');
   runApp(const CreditCardValidatorApp());
 }
 
@@ -41,52 +48,57 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class CreditCardModel {
-  String cardNumber;
-  String expiryDate;
-  String cardHolderName;
-  String cvvCode;
-  bool showBackView;
-
-  CreditCardModel({
-    required this.cardNumber,
-    required this.expiryDate,
-    required this.cardHolderName,
-    required this.cvvCode,
-    required this.showBackView,
-  });
-}
-
 class _HomePageState extends State<HomePage> {
-  final List<CreditCardModel> creditCards = [
-    CreditCardModel(
-        cardNumber: '103737367280',
-        expiryDate: '12/11/2021',
-        cardHolderName: 'Justin Korkie',
-        cvvCode: '901',
-        showBackView: false),
-    CreditCardModel(
-        cardNumber: '2098797987987980',
-        expiryDate: '12/11/2021',
-        cardHolderName: 'Kevin Spacey',
-        cvvCode: '901',
-        showBackView: false),
-    CreditCardModel(
-        cardNumber: '398798798798700',
-        expiryDate: '12/11/2021',
-        cardHolderName: 'John Doe',
-        cvvCode: '901',
-        showBackView: false),
-    CreditCardModel(
-        cardNumber: '309879879879870',
-        expiryDate: '12/11/2021',
-        cardHolderName: 'John Doe',
-        cvvCode: '901',
-        showBackView: false),
-  ];
+  late Country country;
+  @override
+  initState() {
+    super.initState();
+    country = Country(
+        phoneCode: '27',
+        countryCode: 'ZA',
+        e164Sc: 0,
+        geographic: true,
+        level: 1,
+        name: 'South Africa',
+        example: '711234567',
+        displayName: 'South Africa (ZA) [+27]',
+        displayNameNoCountryCode: 'South Africa (ZA)',
+        e164Key: '27-ZA-0');
+  }
 
   @override
   Widget build(BuildContext context) {
+    //Todo: Get from hive
+    // final List<CreditCardModel> creditCards = [
+    //   CreditCardModel(
+    //       cardNumber: '103737367280',
+    //       expiryDate: '12/11/2021',
+    //       cardHolderName: 'Justin Korkie',
+    //       cvv: '901',
+    //       country: country,
+    //       cardType: 'mastercard'),
+    //   CreditCardModel(
+    //     cardNumber: '2098797987987980',
+    //     expiryDate: '12/11/2021',
+    //     cardHolderName: 'Kevin Spacey',
+    //     cvv: '901',
+    //     country: country,
+    //   ),
+    //   CreditCardModel(
+    //     cardNumber: '398798798798700',
+    //     expiryDate: '12/11/2021',
+    //     cardHolderName: 'John Doe',
+    //     cvv: '901',
+    //     country: country,
+    //   ),
+    //   CreditCardModel(
+    //     cardNumber: '309879879879870',
+    //     expiryDate: '12/11/2021',
+    //     cardHolderName: 'John Doe',
+    //     cvv: '901',
+    //     country: country,
+    //   ),
+    // ];
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Cards'),
@@ -127,33 +139,23 @@ class _HomePageState extends State<HomePage> {
       ),
       body: ListView.separated(
         padding: const EdgeInsets.all(8),
-        itemCount: creditCards.length,
+        itemCount: boxCreditCards.length,
         itemBuilder: (BuildContext context, int index) {
-          return CreditCardWidget(
-            cardBgColor: const Color.fromARGB(18, 16, 16, 16),
-            obscureCardCvv: false,
-            obscureCardNumber: false,
-            obscureInitialCardNumber: false,
-            animationDuration: const Duration(
-                days: 0,
-                hours: 0,
-                minutes: 0,
-                seconds: 1,
-                milliseconds: 0,
-                microseconds: 0),
-            isChipVisible: true,
-            //Todo: edit this to allow custom images
-            customCardTypeIcons: [CustomCardTypeIcon(cardType: CardType.otherBrand, cardImage: Image.asset('assets/images/verve.png'))],
-            isHolderNameVisible: true,
-            //Todo: Model will need two card type fields, to account for tyep not found on card type
-            cardType: CardType.hipercard,
-            cardNumber: creditCards[index].cardNumber,
-            expiryDate: creditCards[index].expiryDate,
-            cardHolderName: creditCards[index].cardHolderName,
-            cvvCode: creditCards[index].cvvCode,
-            showBackView: creditCards[index].showBackView,
-            onCreditCardWidgetChange:
-                (creditCardBrand) {}, //true when you want to show cvv(back) view
+          CreditCard cc = boxCreditCards.getAt(index);
+          return Stack(
+            children: <Widget>[
+              CreditCardWidget(
+                creditCardData: boxCreditCards.getAt(index),
+              ),
+              Container(
+                  alignment: Alignment.topRight,
+                  child: FloatingActionButton.small(
+                    splashColor: Colors.amber,
+                    backgroundColor: Colors.red[400],
+                    onPressed: () {},
+                    child: const Icon(Icons.delete),
+                  ))
+            ],
           );
         },
         separatorBuilder: (BuildContext context, int index) => const Divider(),
