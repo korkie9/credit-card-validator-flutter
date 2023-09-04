@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:credit_card_validator_app/utils/utils.dart';
 import 'package:credit_card_validator/credit_card_validator.dart';
+import 'package:credit_card_validator_app/hive/hive.dart' as hive_models;
+import 'package:hive_flutter/hive_flutter.dart';
 
 class AddCardPage extends StatefulWidget {
   const AddCardPage({super.key});
@@ -16,6 +18,17 @@ class AddCardPage extends StatefulWidget {
 }
 
 class _AddCardPageState extends State<AddCardPage> {
+  Box<hive_models.Country> boxCountries =
+      Hive.box<hive_models.Country>('countryBox');
+  @override
+  initState() {
+    super.initState();
+    for (hive_models.Country country in boxCountries.values) {
+      savedBannedCountryCodes.add(country.code);
+    }
+  }
+
+  List<String> savedBannedCountryCodes = <String>[];
   final _addCardFormKey = GlobalKey<FormState>();
   String cardTypePath = '';
   //Controllers
@@ -156,7 +169,7 @@ class _AddCardPageState extends State<AddCardPage> {
                   onPressed: () {
                     showCountryPicker(
                       context: context,
-                      exclude: <String>['KN', 'MF'],
+                      exclude: savedBannedCountryCodes,
                       showPhoneCode: false,
                       onSelect: (Country country) {
                         setState(() {

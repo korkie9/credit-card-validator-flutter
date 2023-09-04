@@ -14,7 +14,7 @@ void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(CreditCardAdapter());
   Hive.registerAdapter(CountryAdapter());
-  // boxCountries = await Hive.openBox<hive_models.Country>('countryBox');
+  boxCountries = await Hive.openBox<hive_models.Country>('countryBox');
   boxCreditCards = await Hive.openBox<CreditCard>('creditCardBox');
   runApp(const CreditCardValidatorApp());
 }
