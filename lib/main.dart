@@ -1,17 +1,20 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:credit_card_validator_app/components/components.dart';
+import 'package:credit_card_validator_app/hive/country.dart';
 import 'package:credit_card_validator_app/hive/credit_card.dart';
 import 'package:flutter/material.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'models/models.dart';
 import 'pages/pages.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:credit_card_validator_app/hive/boxes.dart';
+import 'package:credit_card_validator_app/hive/hive.dart' as hive_models;
 
 void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(CreditCardAdapter());
+  Hive.registerAdapter(CountryAdapter());
+  // boxCountries = await Hive.openBox<hive_models.Country>('countryBox');
   boxCreditCards = await Hive.openBox<CreditCard>('creditCardBox');
   runApp(const CreditCardValidatorApp());
 }
@@ -49,22 +52,22 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late Country country;
-  @override
-  initState() {
-    super.initState();
-    country = Country(
-        phoneCode: '27',
-        countryCode: 'ZA',
-        e164Sc: 0,
-        geographic: true,
-        level: 1,
-        name: 'South Africa',
-        example: '711234567',
-        displayName: 'South Africa (ZA) [+27]',
-        displayNameNoCountryCode: 'South Africa (ZA)',
-        e164Key: '27-ZA-0');
-  }
+  // late Country country;
+  // @override
+  // initState() {
+  //   super.initState();
+  //   // country = Country(
+  //   //     phoneCode: '27',
+  //   //     countryCode: 'ZA',
+  //   //     e164Sc: 0,
+  //   //     geographic: true,
+  //   //     level: 1,
+  //   //     name: 'South Africa',
+  //   //     example: '711234567',
+  //   //     displayName: 'South Africa (ZA) [+27]',
+  //   //     displayNameNoCountryCode: 'South Africa (ZA)',
+  //   //     e164Key: '27-ZA-0');
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -140,15 +143,22 @@ class _HomePageState extends State<HomePage> {
       body: ValueListenableBuilder(
         valueListenable: boxCreditCards.listenable(),
         builder: (context, box, widget) {
+          if (boxCreditCards.isEmpty) {
+            return const Center(
+                child: Text(
+              'You currently have no cards',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            ));
+          }
           return ListView.separated(
             padding: const EdgeInsets.all(8),
             itemCount: boxCreditCards.length,
             itemBuilder: (BuildContext context, int index) {
-              CreditCard cc = boxCreditCards.getAt(index);
+              CreditCard cCard = boxCreditCards.getAt(index);
               return Stack(
                 children: <Widget>[
                   CreditCardWidget(
-                    creditCardData: boxCreditCards.getAt(index),
+                    creditCardData: cCard,
                   ),
                   Container(
                       alignment: Alignment.topRight,

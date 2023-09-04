@@ -1,5 +1,8 @@
+import 'package:credit_card_validator_app/hive/boxes.dart';
+import 'package:credit_card_validator_app/hive/hive.dart' as hive_models;
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class BannedCountriesPage extends StatefulWidget {
   const BannedCountriesPage({super.key});
@@ -9,63 +12,32 @@ class BannedCountriesPage extends StatefulWidget {
 }
 
 class _BannedCountriesPageState extends State<BannedCountriesPage> {
-  @override
-  initState() {
-    super.initState();
-    for (Country country in saveBannedCountries) {
-      savedBannedCountryCodes.add(country.countryCode);
-    }
-  }
+  // Box<hive_models.Country> boxCountries =
+  //     Hive.box<hive_models.Country>('countryBox');
+  // @override
+  // initState() {
+  //   super.initState();
+  //   // for (hive_models.Country country in boxCountries.values) {
+  //   //   savedBannedCountryCodes.add(country.code);
+  //   // }
+  // }
 
-  //Todo: Get from hive
   List<String> savedBannedCountryCodes = <String>[];
-  List<Country> saveBannedCountries = <Country>[
-    Country(
-        phoneCode: '27',
-        countryCode: 'US',
-        e164Sc: 0,
-        geographic: true,
-        level: 1,
-        name: 'United States of America',
-        example: '711234567',
-        displayName: 'South Africa (ZA) [+27]',
-        displayNameNoCountryCode: 'South Africa (ZA)',
-        e164Key: '27-ZA-0'),
-    Country(
-        phoneCode: '27',
-        countryCode: 'NGA',
-        e164Sc: 0,
-        geographic: true,
-        level: 1,
-        name: 'Nigeria',
-        example: '711234567',
-        displayName: 'South Africa (ZA) [+27]',
-        displayNameNoCountryCode: 'South Africa (ZA)',
-        e164Key: '27-ZA-0'),
-    Country(
-        phoneCode: '27',
-        countryCode: 'CA',
-        e164Sc: 0,
-        geographic: true,
-        level: 1,
-        name: 'Canada',
-        example: '711234567',
-        displayName: 'South Africa (ZA) [+27]',
-        displayNameNoCountryCode: 'South Africa (ZA)',
-        e164Key: '27-ZA-0'),
-  ];
 
-  //Todo: adjust the following 2 functions to work with hive
   void addCountry(Country country) {
+    // hive_models.Country newCountry = hive_models.Country(
+    //     code: country.countryCode,
+    //     name: country.name,
+    //     flagEmoji: country.flagEmoji);
     setState(() {
-      saveBannedCountries.add(country);
+      // boxCountries.put(country.countryCode, newCountry);
       savedBannedCountryCodes.add(country.countryCode);
     });
   }
 
   void deleteCountry(int index) {
     setState(() {
-      saveBannedCountries.removeAt(index);
+      // boxCountries.deleteAt(index);
       savedBannedCountryCodes.removeAt(index);
     });
   }
@@ -112,7 +84,8 @@ class _BannedCountriesPageState extends State<BannedCountriesPage> {
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(8),
-        itemCount: saveBannedCountries.length,
+        // itemCount: boxCountries.length,
+        itemCount: [1, 11 ,1].length,
         itemBuilder: (BuildContext context, int index) {
           return Container(
             decoration: BoxDecoration(
@@ -132,21 +105,23 @@ class _BannedCountriesPageState extends State<BannedCountriesPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 Text(
-                    style: const TextStyle(
-                      fontSize: 25,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    saveBannedCountries[index].flagEmoji),
+                  style: const TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  'weffew',
+                  // boxCountries.getAt(index).flagEmoji,
+                ),
                 Text(
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
-                    saveBannedCountries[index].name),
+                    'Hello'),
+                // boxCountries.getAt(index).name),
                 IconButton(
                   onPressed: () {
-                    //delete from hive
-                    deleteCountry(index);
+                    //deleteCountry(index);
                   },
                   icon: const Icon(Icons.delete),
                 ),

@@ -2,14 +2,11 @@ import 'package:credit_card_validator/validation_results.dart';
 import 'package:credit_card_validator_app/hive/boxes.dart';
 import 'package:credit_card_validator_app/hive/credit_card.dart';
 import 'package:credit_card_validator_app/input_formatters/input_formatters.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:credit_card_validator_app/utils/utils.dart';
 import 'package:credit_card_validator/credit_card_validator.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'dart:developer';
 
 class AddCardPage extends StatefulWidget {
   const AddCardPage({super.key});
@@ -203,21 +200,7 @@ class _AddCardPageState extends State<AddCardPage> {
       width: 400,
       child: ElevatedButton(
         onPressed: () {
-          bool? isValid = _addCardFormKey.currentState?.validate();
-          if (isValid != null && isValid) {
-            CreditCard newCard = CreditCard(
-              cardNumber: cardNumberController.text,
-              expiryDate: expiryDateController.text,
-              cardHolderName: cardHolderNameController.text,
-              cvv: cvvController.text,
-              countryFlagEmoji: selectedCountry.flagEmoji,
-            );
-            setState(() {
-              boxCreditCards
-                  .add(newCard)
-                  .then((value) => Navigator.pop(context));
-            });
-          }
+          submit();
         },
         child: const Text(
           'Submit',
@@ -283,4 +266,47 @@ class _AddCardPageState extends State<AddCardPage> {
           return null;
         },
       ));
+
+  submit() {
+    bool? isValid = _addCardFormKey.currentState?.validate();
+    bool? cardExists = boxCreditCards.containsKey(cardNumberController.text);
+    if (cardExists) {
+      showDialog<String>(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          shadowColor: Colors.blueAccent,
+          title: const Text(
+            'Card Number already exists',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            'Please add card card with a different number',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'OK'),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+    if (isValid != null && isValid && !cardExists) {
+      CreditCard newCard = CreditCard(
+        cardNumber: cardNumberController.text,
+        expiryDate: expiryDateController.text,
+        cardHolderName: cardHolderNameController.text,
+        cvv: cvvController.text,
+        countryFlagEmoji: selectedCountry.flagEmoji,
+      );
+      setState(() {
+        boxCreditCards
+            .put(cardNumberController.text, newCard)
+            .then((value) => Navigator.pop(context));
+      });
+    }
+  }
 }
