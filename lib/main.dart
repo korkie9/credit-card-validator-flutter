@@ -8,22 +8,13 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'pages/pages.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:credit_card_validator_app/hive/boxes.dart';
-<<<<<<< HEAD
 import 'package:credit_card_validator_app/hive/hive.dart' as hive_models;
-=======
-import 'package:credit_card_validator_app/hive/hive.dart' as hive;
->>>>>>> 6f7d5dcf4916f9f53d9451552ea0249e5751a39f
 
 void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(CreditCardAdapter());
-<<<<<<< HEAD
   Hive.registerAdapter(CountryAdapter());
   // boxCountries = await Hive.openBox<hive_models.Country>('countryBox');
-=======
-  Hive.registerAdapter(hive.CountryAdapter());
-  boxCountries = await Hive.openBox<hive.Country>('countryBox');
->>>>>>> 6f7d5dcf4916f9f53d9451552ea0249e5751a39f
   boxCreditCards = await Hive.openBox<CreditCard>('creditCardBox');
   runApp(const CreditCardValidatorApp());
 }
@@ -61,25 +52,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-<<<<<<< HEAD
-  // late Country country;
-  // @override
-  // initState() {
-  //   super.initState();
-  //   // country = Country(
-  //   //     phoneCode: '27',
-  //   //     countryCode: 'ZA',
-  //   //     e164Sc: 0,
-  //   //     geographic: true,
-  //   //     level: 1,
-  //   //     name: 'South Africa',
-  //   //     example: '711234567',
-  //   //     displayName: 'South Africa (ZA) [+27]',
-  //   //     displayNameNoCountryCode: 'South Africa (ZA)',
-  //   //     e164Key: '27-ZA-0');
-  // }
-=======
->>>>>>> 6f7d5dcf4916f9f53d9451552ea0249e5751a39f
 
   @override
   Widget build(BuildContext context) {
