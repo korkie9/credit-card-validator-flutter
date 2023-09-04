@@ -137,28 +137,38 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(8),
-        itemCount: boxCreditCards.length,
-        itemBuilder: (BuildContext context, int index) {
-          CreditCard cc = boxCreditCards.getAt(index);
-          return Stack(
-            children: <Widget>[
-              CreditCardWidget(
-                creditCardData: boxCreditCards.getAt(index),
-              ),
-              Container(
-                  alignment: Alignment.topRight,
-                  child: FloatingActionButton.small(
-                    splashColor: Colors.amber,
-                    backgroundColor: Colors.red[400],
-                    onPressed: () {},
-                    child: const Icon(Icons.delete),
-                  ))
-            ],
+      body: ValueListenableBuilder(
+        valueListenable: boxCreditCards.listenable(),
+        builder: (context, box, widget) {
+          return ListView.separated(
+            padding: const EdgeInsets.all(8),
+            itemCount: boxCreditCards.length,
+            itemBuilder: (BuildContext context, int index) {
+              CreditCard cc = boxCreditCards.getAt(index);
+              return Stack(
+                children: <Widget>[
+                  CreditCardWidget(
+                    creditCardData: boxCreditCards.getAt(index),
+                  ),
+                  Container(
+                      alignment: Alignment.topRight,
+                      child: FloatingActionButton.small(
+                        splashColor: Colors.amber,
+                        backgroundColor: Colors.red[400],
+                        onPressed: () {
+                          setState(() {
+                            boxCreditCards.deleteAt(index);
+                          });
+                        },
+                        child: const Icon(Icons.delete),
+                      ))
+                ],
+              );
+            },
+            separatorBuilder: (BuildContext context, int index) =>
+                const Divider(),
           );
         },
-        separatorBuilder: (BuildContext context, int index) => const Divider(),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {

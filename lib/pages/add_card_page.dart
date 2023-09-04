@@ -213,7 +213,9 @@ class _AddCardPageState extends State<AddCardPage> {
               countryFlagEmoji: selectedCountry.flagEmoji,
             );
             setState(() {
-              boxCreditCards.add(newCard);
+              boxCreditCards
+                  .add(newCard)
+                  .then((value) => Navigator.pop(context));
             });
           }
         },
