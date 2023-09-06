@@ -1,0 +1,23 @@
+## Installing ##
+
+This app can be cloned from (https://github.com/korkie9/credit-card-validator-flutter)
+
+- Install dependancies by running "flutter pub get"
+- Run an emulator on either XCode or android studio. Alternatively have a mobile device plugged in with develop options enabled.
+- To run the app on the emulator, have the emulator selected on you editor and run "flutter run".
+
+## Requirements ##
+- This app has a minumimum android sdk sdk requirement >= 21
+- XCode requires version 13 or higher
+
+## Important notes ##
+
+- For various reasons this app is untested on iPhone.
+
+## Packages and 3rd party libraries used ##
+
+- country_picker - This is a library I used to make selcting a country easier
+- flip_card - This was simply to provide a nice animation when viewing your cards on the home screen
+- hive/hive_flutter - This packaged allowed me to use local storage in a simpler manner
+- image_picker - This was to allow the app to take pictures that would be used to auto fill form fields when inspected by ml kit
+- google_mlkit_text_recognition - This package allows the app to identify text in an image. It was used for autofilling the credit card fields.
