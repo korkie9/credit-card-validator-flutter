@@ -277,9 +277,9 @@ class _AddCardPageState extends State<AddCardPage> {
 
   Future scan() async {
     _addCardFormKey.currentState!.reset();
-    await showDiologuePrompt(
+    await showDialoguePrompt(
         instructionText: 'Please scan front of card', onPress: autoFillFields);
-    await showDiologuePrompt(
+    await showDialoguePrompt(
         instructionText: 'Please scan back of card', onPress: autoFillFields);
   }
 
@@ -318,7 +318,7 @@ class _AddCardPageState extends State<AddCardPage> {
     textRecognizer.close();
   }
 
-  Future<void> showDiologuePrompt(
+  Future<void> showDialoguePrompt(
       {required String instructionText, required Function onPress}) {
     return showDialog<String>(
       context: context,
