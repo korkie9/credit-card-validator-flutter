@@ -24,6 +24,7 @@ class _AddCardPageState extends State<AddCardPage> {
   Box<hive_models.Country> boxCountries =
       Hive.box<hive_models.Country>('countryBox');
   @override
+  final ImagePicker picker = ImagePicker();
   initState() {
     super.initState();
     for (hive_models.Country country in boxCountries.values) {
@@ -34,6 +35,7 @@ class _AddCardPageState extends State<AddCardPage> {
   List<String> savedBannedCountryCodes = <String>[];
   final _addCardFormKey = GlobalKey<FormState>();
   String cardTypePath = '';
+  Widget issuer = CardUtils.getCreditCardIcon('');
   //Controllers
   TextEditingController cardHolderNameController = TextEditingController();
   TextEditingController cardNumberController = TextEditingController();
@@ -84,8 +86,8 @@ class _AddCardPageState extends State<AddCardPage> {
                 ],
               ),
               buildIssuingCountry(),
-              buildSubmitButton(),
               buildScanButton(),
+              buildSubmitButton(),
             ],
           ),
         ),
@@ -100,7 +102,7 @@ class _AddCardPageState extends State<AddCardPage> {
           onChanged: (value) {
             if (value.length > 4) return;
             setState(() {
-              cardTypePath = value;
+              issuer = CardUtils.getCreditCardIcon(value);
             });
           },
           keyboardType: TextInputType.number,
@@ -109,7 +111,7 @@ class _AddCardPageState extends State<AddCardPage> {
             border: const OutlineInputBorder(),
             icon: SizedBox(
               width: 25,
-              child: CardUtils.getCreditCardIcon(cardTypePath),
+              child: issuer,
             ),
           ),
           maxLength: 19,
@@ -143,7 +145,7 @@ class _AddCardPageState extends State<AddCardPage> {
             child: Icon(Icons.numbers),
           ),
         ),
-        maxLength: 3,
+        maxLength: 4,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         validator: (value) {
           if (value == null || value.length < 3 || value.length > 4) {
@@ -159,9 +161,9 @@ class _AddCardPageState extends State<AddCardPage> {
           children: <Widget>[
             const Icon(Icons.flag),
             Container(
-              margin: const EdgeInsets.only(left: 15),
+              margin: const EdgeInsets.only(left: 10),
               child: SizedBox(
-                width: 310,
+                width: 285,
                 height: 50,
                 child: OutlinedButton(
                   style: ButtonStyle(
@@ -171,32 +173,7 @@ class _AddCardPageState extends State<AddCardPage> {
                     ),
                   ),
                   onPressed: () {
-                    showCountryPicker(
-                      context: context,
-                      exclude: savedBannedCountryCodes,
-                      showPhoneCode: false,
-                      onSelect: (Country country) {
-                        setState(() {
-                          selectedCountry = country;
-                        });
-                      },
-                      countryListTheme: CountryListThemeData(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(7.0),
-                          topRight: Radius.circular(7.0),
-                        ),
-                        inputDecoration: InputDecoration(
-                          labelText: 'Search',
-                          hintText: 'Select Country',
-                          prefixIcon: const Icon(Icons.search),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: const Color(0xFF8C98A8).withOpacity(0.2),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
+                    pickCountry();
                   },
                   child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -213,8 +190,9 @@ class _AddCardPageState extends State<AddCardPage> {
       );
 
   Widget buildSubmitButton() {
-    return SizedBox(
+    return Container(
       width: 400,
+      margin: const EdgeInsets.all(10),
       child: ElevatedButton(
         onPressed: () {
           submit();
@@ -236,7 +214,7 @@ class _AddCardPageState extends State<AddCardPage> {
           labelText: 'Name of Card Holder',
           border: OutlineInputBorder(),
           icon: SizedBox(
-            width: 25,
+            width: 23,
             child: Icon(Icons.person),
           ),
         ),
@@ -285,42 +263,109 @@ class _AddCardPageState extends State<AddCardPage> {
       ));
 
   Widget buildScanButton() {
-    return IconButton(
-      onPressed: () {
-        scan();
-      },
-      icon: const Icon(Icons.scanner),
-    );
+    return Container(
+        width: 400,
+        margin: const EdgeInsets.all(10),
+        child: OutlinedButton(
+          onPressed: () {
+            scan();
+          },
+          child: const Text('Scan Card'),
+        ));
   }
 
   Future scan() async {
-    final ImagePicker picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.camera);
+    await showDiologuePrompt(
+        instructionText: 'Please scan front of card', onPress: autoFillFields);
+    await showDiologuePrompt(
+        instructionText: 'Please scan back of card', onPress: autoFillFields);
+  }
 
+  Future<void> autoFillFields() async {
+    final image = await picker.pickImage(source: ImageSource.camera);
+    final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
     if (image != null) {
       final imagePath = File(image.path);
       final inputImage = InputImage.fromFile(imagePath);
-      final textRecognizer =
-          TextRecognizer(script: TextRecognitionScript.latin);
       final RecognizedText recognizedText =
           await textRecognizer.processImage(inputImage);
-
-      String rectext = recognizedText.text;
       for (TextBlock block in recognizedText.blocks) {
         final String text = block.text;
-        if (text.contains('/')) {
+        if (text.startsWith(RegExp('([0-9])')) &&
+            text.length > 13 &&
+            text.length < 20) {
+          String formattedNumber =
+              cardNumberController.text = text.replaceAll(' ', '').trim();
+          setState(() {
+            issuer = CardUtils.getCreditCardIcon(formattedNumber);
+            cardNumberController.text = formattedNumber;
+          });
+        }
+        if (text.length == 5 && text.contains('/')) {
           expiryDateController.text = text;
         }
-
-        print(text);
-        // for (TextLine line in block.lines) {
-        //   // Same getters as TextBlock
-        //   for (TextElement element in line.elements) {
-        //     // Same getters as TextBlock
-        //   }
-        // }
+        if (text.startsWith(RegExp('([0-9])')) &&
+            text.length >= 3 &&
+            text.length < 5) {
+          cvvController.text = text;
+        }
       }
     }
+    textRecognizer.close();
+  }
+
+  Future<void> showDiologuePrompt(
+      {required String instructionText, required Function onPress}) {
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        shadowColor: Colors.blueAccent,
+        title: Text(
+          instructionText,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => {onPress(), Navigator.pop(context, 'OK')},
+            child: const Text('OK'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'Cancel'),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pickCountry() {
+    showCountryPicker(
+      context: context,
+      exclude: savedBannedCountryCodes,
+      showPhoneCode: false,
+      onSelect: (Country country) {
+        setState(() {
+          selectedCountry = country;
+        });
+      },
+      countryListTheme: CountryListThemeData(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(7.0),
+          topRight: Radius.circular(7.0),
+        ),
+        inputDecoration: InputDecoration(
+          labelText: 'Search',
+          hintText: 'Select Country',
+          prefixIcon: const Icon(Icons.search),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: const Color(0xFF8C98A8).withOpacity(0.2),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   submit() {
