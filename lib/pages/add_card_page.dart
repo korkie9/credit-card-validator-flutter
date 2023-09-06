@@ -23,8 +23,9 @@ class AddCardPage extends StatefulWidget {
 class _AddCardPageState extends State<AddCardPage> {
   Box<hive_models.Country> boxCountries =
       Hive.box<hive_models.Country>('countryBox');
-  @override
   final ImagePicker picker = ImagePicker();
+
+  @override
   initState() {
     super.initState();
     for (hive_models.Country country in boxCountries.values) {
@@ -275,6 +276,7 @@ class _AddCardPageState extends State<AddCardPage> {
   }
 
   Future scan() async {
+    _addCardFormKey.currentState!.reset();
     await showDiologuePrompt(
         instructionText: 'Please scan front of card', onPress: autoFillFields);
     await showDiologuePrompt(
@@ -291,6 +293,7 @@ class _AddCardPageState extends State<AddCardPage> {
           await textRecognizer.processImage(inputImage);
       for (TextBlock block in recognizedText.blocks) {
         final String text = block.text;
+
         if (text.startsWith(RegExp('([0-9])')) &&
             text.length > 13 &&
             text.length < 20) {
@@ -302,9 +305,10 @@ class _AddCardPageState extends State<AddCardPage> {
           });
         }
         if (text.length == 5 && text.contains('/')) {
+          //checks date fromat
           expiryDateController.text = text;
         }
-        if (text.startsWith(RegExp('([0-9])')) &&
+        if (num.tryParse(text) != null && //checks if string is a number
             text.length >= 3 &&
             text.length < 5) {
           cvvController.text = text;
@@ -397,12 +401,13 @@ class _AddCardPageState extends State<AddCardPage> {
     }
     if (isValid != null && isValid && !cardExists) {
       CreditCard newCard = CreditCard(
-        cardNumber: cardNumberController.text,
-        expiryDate: expiryDateController.text,
-        cardHolderName: cardHolderNameController.text,
-        cvv: cvvController.text,
-        countryFlagEmoji: selectedCountry.flagEmoji,
-      );
+          cardNumber: cardNumberController.text,
+          expiryDate: expiryDateController.text,
+          cardHolderName: cardHolderNameController.text,
+          cvv: cvvController.text,
+          countryFlagEmoji: selectedCountry.flagEmoji,
+          cardType:
+              CardUtils.getCreditCardType(cardNumberController.text).name);
       setState(() {
         boxCreditCards
             .put(cardNumberController.text, newCard)
