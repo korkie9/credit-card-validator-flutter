@@ -1,10 +1,21 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:credit_card_validator_app/components/components.dart';
+import 'package:credit_card_validator_app/hive/country.dart';
+import 'package:credit_card_validator_app/hive/credit_card.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_credit_card/flutter_credit_card.dart';
-
+import 'package:country_picker/country_picker.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'pages/pages.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:credit_card_validator_app/hive/boxes.dart';
+import 'package:credit_card_validator_app/hive/hive.dart' as hive_models;
 
-void main() {
+void main() async {
+  await Hive.initFlutter();
+  Hive.registerAdapter(CreditCardAdapter());
+  Hive.registerAdapter(CountryAdapter());
+  boxCountries = await Hive.openBox<hive_models.Country>('countryBox');
+  boxCreditCards = await Hive.openBox<CreditCard>('creditCardBox');
   runApp(const CreditCardValidatorApp());
 }
 
@@ -17,9 +28,17 @@ class CreditCardValidatorApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color.fromRGBO(119, 153, 168, 90)),
         useMaterial3: true,
       ),
+      supportedLocales: const [Locale('en')],
+      localizationsDelegates: const [
+        CountryLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
       home: const HomePage(),
     );
   }
@@ -32,55 +51,13 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class CreditCardModel {
-  String cardNumber;
-  String expiryDate;
-  String cardHolderName;
-  String cvvCode;
-  bool showBackView;
-
-  CreditCardModel({
-    required this.cardNumber,
-    required this.expiryDate,
-    required this.cardHolderName,
-    required this.cvvCode,
-    required this.showBackView,
-  });
-}
-
 class _HomePageState extends State<HomePage> {
-  final List<CreditCardModel> creditCards = [
-    CreditCardModel(
-        cardNumber: '100',
-        expiryDate: '12/11/2021',
-        cardHolderName: 'Justin Korkie',
-        cvvCode: '901',
-        showBackView: false),
-    CreditCardModel(
-        cardNumber: '200',
-        expiryDate: '12/11/2021',
-        cardHolderName: 'Kevin Spacey',
-        cvvCode: '901',
-        showBackView: false),
-    CreditCardModel(
-        cardNumber: '300',
-        expiryDate: '12/11/2021',
-        cardHolderName: 'John Doe',
-        cvvCode: '901',
-        showBackView: false),
-    CreditCardModel(
-        cardNumber: '300',
-        expiryDate: '12/11/2021',
-        cardHolderName: 'John Doe',
-        cvvCode: '901',
-        showBackView: false),
-  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cards'),
+        title: const Text('My Cards'),
       ),
       drawer: Drawer(
         child: ListView(
@@ -90,10 +67,10 @@ class _HomePageState extends State<HomePage> {
               decoration: BoxDecoration(
                 color: Colors.blue,
               ),
-              child: Center(
-                child: Text(
-                    style: TextStyle(fontSize: 20), 'Credit Card Validator'),
-              ),
+              child: Row(children: [
+                Text(style: TextStyle(fontSize: 20), 'Options'),
+                Icon(Icons.menu_open_rounded)
+              ]),
             ),
             ListTile(
               leading: const Icon(Icons.home),
@@ -116,31 +93,46 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(8),
-        itemCount: creditCards.length,
-        itemBuilder: (BuildContext context, int index) {
-          return CreditCardWidget(
-            cardNumber: creditCards[index].cardNumber,
-            expiryDate: creditCards[index].expiryDate,
-            cardHolderName: creditCards[index].cardHolderName,
-            cvvCode: creditCards[index].cvvCode,
-            showBackView: creditCards[index].showBackView,
-            onCreditCardWidgetChange:
-                (CreditCardBrand) {}, //true when you want to show cvv(back) view
+      body: ValueListenableBuilder(
+        valueListenable: boxCreditCards.listenable(),
+        builder: (context, box, widget) {
+          if (boxCreditCards.isEmpty) {
+            return const Center(
+                child: Text(
+              'You currently have no cards',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            ));
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.all(8),
+            itemCount: boxCreditCards.length,
+            itemBuilder: (BuildContext context, int index) {
+              CreditCard cCard = boxCreditCards.getAt(index);
+              return Stack(
+                children: <Widget>[
+                  CreditCardWidget(
+                    creditCardData: cCard,
+                  ),
+                  Container(
+                      alignment: Alignment.topRight,
+                      child: FloatingActionButton.small(
+                        splashColor: Colors.amber,
+                        backgroundColor: Colors.red[400],
+                        onPressed: () {
+                          setState(() {
+                            boxCreditCards.deleteAt(index);
+                          });
+                        },
+                        child: const Icon(Icons.delete),
+                      ))
+                ],
+              );
+            },
+            separatorBuilder: (BuildContext context, int index) =>
+                const Divider(),
           );
         },
-        separatorBuilder: (BuildContext context, int index) => const Divider(),
       ),
-      // body: CreditCardWidget(
-      //   cardNumber: '0000',
-      //   expiryDate: '12/11/12',
-      //   cardHolderName: 'Justin Korkie',
-      //   cvvCode: '901',
-      //   showBackView: true,
-      //   onCreditCardWidgetChange:
-      //       (CreditCardBrand) {}, //true when you want to show cvv(back) view
-      // ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
