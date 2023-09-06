@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:credit_card_validator/validation_results.dart';
 import 'package:credit_card_validator_app/hive/boxes.dart';
 import 'package:credit_card_validator_app/hive/credit_card.dart';
@@ -9,6 +10,8 @@ import 'package:credit_card_validator_app/utils/utils.dart';
 import 'package:credit_card_validator/credit_card_validator.dart';
 import 'package:credit_card_validator_app/hive/hive.dart' as hive_models;
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddCardPage extends StatefulWidget {
   const AddCardPage({super.key});
@@ -81,7 +84,8 @@ class _AddCardPageState extends State<AddCardPage> {
                 ],
               ),
               buildIssuingCountry(),
-              buildSubmitButton()
+              buildSubmitButton(),
+              buildScanButton(),
             ],
           ),
         ),
@@ -279,6 +283,45 @@ class _AddCardPageState extends State<AddCardPage> {
           return null;
         },
       ));
+
+  Widget buildScanButton() {
+    return IconButton(
+      onPressed: () {
+        scan();
+      },
+      icon: const Icon(Icons.scanner),
+    );
+  }
+
+  Future scan() async {
+    final ImagePicker picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.camera);
+
+    if (image != null) {
+      final imagePath = File(image.path);
+      final inputImage = InputImage.fromFile(imagePath);
+      final textRecognizer =
+          TextRecognizer(script: TextRecognitionScript.latin);
+      final RecognizedText recognizedText =
+          await textRecognizer.processImage(inputImage);
+
+      String rectext = recognizedText.text;
+      for (TextBlock block in recognizedText.blocks) {
+        final String text = block.text;
+        if (text.contains('/')) {
+          expiryDateController.text = text;
+        }
+
+        print(text);
+        // for (TextLine line in block.lines) {
+        //   // Same getters as TextBlock
+        //   for (TextElement element in line.elements) {
+        //     // Same getters as TextBlock
+        //   }
+        // }
+      }
+    }
+  }
 
   submit() {
     bool? isValid = _addCardFormKey.currentState?.validate();
