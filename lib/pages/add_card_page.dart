@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:credit_card_validator/validation_results.dart';
 import 'package:credit_card_validator_app/hive/boxes.dart';
 import 'package:credit_card_validator_app/hive/credit_card.dart';
@@ -9,6 +10,8 @@ import 'package:credit_card_validator_app/utils/utils.dart';
 import 'package:credit_card_validator/credit_card_validator.dart';
 import 'package:credit_card_validator_app/hive/hive.dart' as hive_models;
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddCardPage extends StatefulWidget {
   const AddCardPage({super.key});
@@ -20,6 +23,8 @@ class AddCardPage extends StatefulWidget {
 class _AddCardPageState extends State<AddCardPage> {
   Box<hive_models.Country> boxCountries =
       Hive.box<hive_models.Country>('countryBox');
+  final ImagePicker picker = ImagePicker();
+
   @override
   initState() {
     super.initState();
@@ -31,6 +36,7 @@ class _AddCardPageState extends State<AddCardPage> {
   List<String> savedBannedCountryCodes = <String>[];
   final _addCardFormKey = GlobalKey<FormState>();
   String cardTypePath = '';
+  Widget issuer = CardUtils.getCreditCardIcon('');
   //Controllers
   TextEditingController cardHolderNameController = TextEditingController();
   TextEditingController cardNumberController = TextEditingController();
@@ -81,7 +87,8 @@ class _AddCardPageState extends State<AddCardPage> {
                 ],
               ),
               buildIssuingCountry(),
-              buildSubmitButton()
+              buildScanButton(),
+              buildSubmitButton(),
             ],
           ),
         ),
@@ -96,7 +103,7 @@ class _AddCardPageState extends State<AddCardPage> {
           onChanged: (value) {
             if (value.length > 4) return;
             setState(() {
-              cardTypePath = value;
+              issuer = CardUtils.getCreditCardIcon(value);
             });
           },
           keyboardType: TextInputType.number,
@@ -105,7 +112,7 @@ class _AddCardPageState extends State<AddCardPage> {
             border: const OutlineInputBorder(),
             icon: SizedBox(
               width: 25,
-              child: CardUtils.getCreditCardIcon(cardTypePath),
+              child: issuer,
             ),
           ),
           maxLength: 19,
@@ -139,7 +146,7 @@ class _AddCardPageState extends State<AddCardPage> {
             child: Icon(Icons.numbers),
           ),
         ),
-        maxLength: 3,
+        maxLength: 4,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         validator: (value) {
           if (value == null || value.length < 3 || value.length > 4) {
@@ -155,9 +162,9 @@ class _AddCardPageState extends State<AddCardPage> {
           children: <Widget>[
             const Icon(Icons.flag),
             Container(
-              margin: const EdgeInsets.only(left: 15),
+              margin: const EdgeInsets.only(left: 10),
               child: SizedBox(
-                width: 310,
+                width: 285,
                 height: 50,
                 child: OutlinedButton(
                   style: ButtonStyle(
@@ -167,32 +174,7 @@ class _AddCardPageState extends State<AddCardPage> {
                     ),
                   ),
                   onPressed: () {
-                    showCountryPicker(
-                      context: context,
-                      exclude: savedBannedCountryCodes,
-                      showPhoneCode: false,
-                      onSelect: (Country country) {
-                        setState(() {
-                          selectedCountry = country;
-                        });
-                      },
-                      countryListTheme: CountryListThemeData(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(7.0),
-                          topRight: Radius.circular(7.0),
-                        ),
-                        inputDecoration: InputDecoration(
-                          labelText: 'Search',
-                          hintText: 'Select Country',
-                          prefixIcon: const Icon(Icons.search),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: const Color(0xFF8C98A8).withOpacity(0.2),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
+                    pickCountry();
                   },
                   child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -209,8 +191,9 @@ class _AddCardPageState extends State<AddCardPage> {
       );
 
   Widget buildSubmitButton() {
-    return SizedBox(
+    return Container(
       width: 400,
+      margin: const EdgeInsets.all(10),
       child: ElevatedButton(
         onPressed: () {
           submit();
@@ -232,7 +215,7 @@ class _AddCardPageState extends State<AddCardPage> {
           labelText: 'Name of Card Holder',
           border: OutlineInputBorder(),
           icon: SizedBox(
-            width: 25,
+            width: 23,
             child: Icon(Icons.person),
           ),
         ),
@@ -280,6 +263,115 @@ class _AddCardPageState extends State<AddCardPage> {
         },
       ));
 
+  Widget buildScanButton() {
+    return Container(
+        width: 400,
+        margin: const EdgeInsets.all(10),
+        child: OutlinedButton(
+          onPressed: () {
+            scan();
+          },
+          child: const Text('Scan Card'),
+        ));
+  }
+
+  Future scan() async {
+    _addCardFormKey.currentState!.reset();
+    await showDialoguePrompt(
+        instructionText: 'Please scan front of card', onPress: autoFillFields);
+    await showDialoguePrompt(
+        instructionText: 'Please scan back of card', onPress: autoFillFields);
+  }
+
+  Future<void> autoFillFields() async {
+    final image = await picker.pickImage(source: ImageSource.camera);
+    final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+    if (image != null) {
+      final imagePath = File(image.path);
+      final inputImage = InputImage.fromFile(imagePath);
+      final RecognizedText recognizedText =
+          await textRecognizer.processImage(inputImage);
+      for (TextBlock block in recognizedText.blocks) {
+        final String text = block.text;
+
+        if (text.startsWith(RegExp('([0-9])')) &&
+            text.length > 13 &&
+            text.length < 20) {
+          String formattedNumber =
+              cardNumberController.text = text.replaceAll(' ', '').trim();
+          setState(() {
+            issuer = CardUtils.getCreditCardIcon(formattedNumber);
+            cardNumberController.text = formattedNumber;
+          });
+        }
+        if (text.length == 5 && text.contains('/')) {
+          //checks date fromat
+          expiryDateController.text = text;
+        }
+        if (num.tryParse(text) != null && //checks if string is a number
+            text.length >= 3 &&
+            text.length < 5) {
+          cvvController.text = text;
+        }
+      }
+    }
+    textRecognizer.close();
+  }
+
+  Future<void> showDialoguePrompt(
+      {required String instructionText, required Function onPress}) {
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        shadowColor: Colors.blueAccent,
+        title: Text(
+          instructionText,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => {onPress(), Navigator.pop(context, 'OK')},
+            child: const Text('OK'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'Cancel'),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pickCountry() {
+    showCountryPicker(
+      context: context,
+      exclude: savedBannedCountryCodes,
+      showPhoneCode: false,
+      onSelect: (Country country) {
+        setState(() {
+          selectedCountry = country;
+        });
+      },
+      countryListTheme: CountryListThemeData(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(7.0),
+          topRight: Radius.circular(7.0),
+        ),
+        inputDecoration: InputDecoration(
+          labelText: 'Search',
+          hintText: 'Select Country',
+          prefixIcon: const Icon(Icons.search),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: const Color(0xFF8C98A8).withOpacity(0.2),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   submit() {
     bool? isValid = _addCardFormKey.currentState?.validate();
     bool? cardExists = boxCreditCards.containsKey(cardNumberController.text);
@@ -309,12 +401,13 @@ class _AddCardPageState extends State<AddCardPage> {
     }
     if (isValid != null && isValid && !cardExists) {
       CreditCard newCard = CreditCard(
-        cardNumber: cardNumberController.text,
-        expiryDate: expiryDateController.text,
-        cardHolderName: cardHolderNameController.text,
-        cvv: cvvController.text,
-        countryFlagEmoji: selectedCountry.flagEmoji,
-      );
+          cardNumber: cardNumberController.text,
+          expiryDate: expiryDateController.text,
+          cardHolderName: cardHolderNameController.text,
+          cvv: cvvController.text,
+          countryFlagEmoji: selectedCountry.flagEmoji,
+          cardType:
+              CardUtils.getCreditCardType(cardNumberController.text).name);
       setState(() {
         boxCreditCards
             .put(cardNumberController.text, newCard)

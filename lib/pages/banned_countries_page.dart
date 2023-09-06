@@ -84,6 +84,18 @@ class _BannedCountriesPageState extends State<BannedCountriesPage> {
         body: ValueListenableBuilder(
           valueListenable: boxCountries.listenable(),
           builder: (context, box, widget) {
+            if (boxCountries.isEmpty) {
+              return const Center(
+                child: Text(
+                  'You currently have no banned countries on your list.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
+              );
+            }
             return ListView.builder(
               padding: const EdgeInsets.all(8),
               itemCount: boxCountries.length,
